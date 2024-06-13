@@ -62,14 +62,14 @@ pipeline {
             }
         }
 
-        stage('Deploy') {
-            steps {
-                withCredentials([file(credentialsId: KUBECONFIG_CREDENTIALS_ID, variable: 'KUBECONFIG')]) {
-                    sh 'helm upgrade --install microservice-app ./helm-chart --kubeconfig $KUBECONFIG'
-                }
-            }
+       stage('Deploy') {
+    steps {
+        withCredentials([file(credentialsId: KUBECONFIG_CREDENTIALS_ID, variable: 'KUBECONFIG')]) {
+            sh 'helm upgrade --install reddit-clone-app ./helm-chart --set image.repository=${env.dockerHubUser}/reddit-clone-app --set image.tag=latest --kubeconfig $KUBECONFIG'
         }
     }
+}
+
 
     post {
         always {
