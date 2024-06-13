@@ -19,3 +19,5 @@ spec:
         image: rohanrustagi18/redditclone
         ports:
         - containerPort: 3000
+
+        
