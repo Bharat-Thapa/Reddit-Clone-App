@@ -1,7 +1,8 @@
 pipeline {
-    agent any
+    agent {label "Dev-Server}"
 
     environment {
+        SONAR_HOME= tool "Sonar"
         DOCKER_CREDENTIALS_ID = 'dockerhub-credentials'
         KUBECONFIG_CREDENTIALS_ID = 'kubeconfig'
     }
@@ -13,27 +14,50 @@ pipeline {
             }
         }
 
-        stage('Build') {
-            steps {
-                script {
-                    dockerImage = docker.build("mydockerhub/microservice:${env.BUILD_ID}")
+        stage("SonarQube Quality Analysis"){
+            steps{
+                withSonarQubeEnv("Sonar"){
+                    sh "$SONAR_HOME/bin/sonar-scanner -Dsonar.projectName=wanderlust -Dsonar.projectKey=wanderlust"
                 }
             }
         }
 
-        stage('Test') {
-            steps {
-                sh 'mvn test'
+        stage("OWASP Dependency Check"){
+            steps{
+                dependencyCheck additionalArguments: '--scan ./', odcInstallation: 'dc'
+                dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
             }
         }
 
-        stage('Push') {
+        stage("Sonar Quality Gate Scan"){
+            steps{
+                timeout(time: 2, unit: "MINUTES"){
+                    waitForQualityGate abortPipeline: false
+                }
+            }
+        }
+        stage("Trivy File System Scan"){
+            steps{
+                sh "trivy fs --format  table -o trivy-fs-report.html ."
+            }
+        }
+
+        stage('Build and Test') {
             steps {
                 script {
-                    docker.withRegistry('https://index.docker.io/v1/', DOCKER_CREDENTIALS_ID) {
-                        dockerImage.push('latest')
-                        dockerImage.push("${env.BUILD_ID}")
-                    }
+                    sh "docker build -t reddit-clone-app ."
+                    echo "code built and tested successfully"
+                }
+            }
+        }
+
+       stage("Push"){
+            steps {
+                echo "Pushing the image to docker hub"
+                withCredentials([usernamePassword(credentialsId:"dockerHub",passwordVariable:"dockerHubPass",usernameVariable:"dockerHubUser")]){
+                sh "docker tag reddit-clone-app ${env.dockerHubUser}/reddit-clone-app:latest"
+                sh "docker login -u ${env.dockerHubUser} -p ${env.dockerHubPass}"
+                sh "docker push ${env.dockerHubUser}/reddit-clone-app:latest"
                 }
             }
         }
