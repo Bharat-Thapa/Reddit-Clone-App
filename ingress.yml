@@ -24,3 +24,5 @@ spec:
             name: reddit-clone-service
             port:
               number: 3000
+
+              
