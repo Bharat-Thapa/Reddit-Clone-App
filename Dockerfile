@@ -1,9 +1,27 @@
-FROM node:19-alpine3.15
+# Stage 1: Build
+FROM node:19 AS builder
 
-WORKDIR /reddit-clone
+# Set the working directory
+WORKDIR /app
 
-COPY . /reddit-clone
-RUN npm install 
+# Copy the application files
+COPY . .
 
+# Install dependencies
+RUN npm install
+
+# Stage 2: Runtime
+FROM node:19-slim
+
+# Set the working directory
+WORKDIR /app
+
+# Copy the built application files from the builder stage
+COPY --from=builder /app .
+
+# Expose the application port
 EXPOSE 3000
-CMD ["npm","run","dev"]
+
+# Command to run the application
+CMD ["npm", "run", "dev"]
+
