@@ -19,6 +19,9 @@ WORKDIR /app
 # Copy the built application files from the builder stage
 COPY --from=builder /app .
 
+# Install dependencies
+RUN npm install
+
 # Expose the application port
 EXPOSE 3000
 
