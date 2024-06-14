@@ -44,10 +44,8 @@ pipeline {
 
         stage('Build and Test') {
             steps {
-                script {
                     sh "docker build -t reddit-clone-app ."
                     echo "code built and tested successfully"
-                }
             }
         }
 
