@@ -4,6 +4,7 @@ kind: Service
 metadata:
   # Service name
   name: reddit-clone-service
+  namespace: reddit
 spec:
   selector:
     # Selector for Pods
